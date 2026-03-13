@@ -101,11 +101,16 @@ with tab_formulario:
                     contenido_prompt_p = []
                     
                     prompt_borrador_p = f"""
-                    ERES UN ABOGADO PRO BONO MEXICANO. Redacta un oficio en PRIMERA PERSONA ("yo, comparezco").
-                    Nombre: {nombre_p} | Contacto: {contacto_p} | Autoridad: {dep_final_p} | Trámite: {tipo_tramite_p}
+                    Actúas como un asistente legal experto en México. Tu tarea es redactar un documento oficial para que el ciudadano lo presente a título personal.
+                    Redacta en PRIMERA PERSONA ("yo, comparezco por mi propio derecho").
+                    Nombre del ciudadano que firmará: {nombre_p} | Contacto: {contacto_p} | Autoridad: {dep_final_p} | Trámite: {tipo_tramite_p}
                     Hechos: {historia_texto_p if historia_texto_p else 'Revisar audio adjunto.'}
-                    Si hay audio y el ciudadano habla lengua indígena, invoca el Art. 2 Constitucional.
-                    Formato texto plano puro.
+                    
+                    INSTRUCCIONES ESTRICTAS:
+                    1. El documento final DEBE estar preparado para ser firmado ÚNICA y EXCLUSIVAMENTE por el ciudadano ({nombre_p}).
+                    2. NUNCA firmes como "Abogado", "Licenciado", "Abogado Pro Bono", ni dejes espacios para "Cédula Profesional". 
+                    3. Si hay audio y el ciudadano habla lengua indígena, invoca el Art. 2 Constitucional.
+                    4. Devuelve únicamente el texto plano del documento listo para imprimir.
                     """
                     
                     if audio_grabado_p:
@@ -128,9 +133,12 @@ with tab_formulario:
                     # PASO 2: REVISIÓN
                     status_p.update(label="🔍 Paso 2/2: Verificando fundamentos legales...", state="running")
                     prompt_revision_p = f"""
-                    ERES UN REVISOR LEGAL ESTRICTO. Elimina cualquier alucinación de leyes falsas de este borrador. 
-                    Usa principios generales o el Art 8 Constitucional si no estás seguro de la ley local.
-                    BORRADOR: {respuesta_borrador_p}
+                    ERES UN REVISOR LEGAL ESTRICTO. Tu trabajo es limpiar el siguiente borrador:
+                    1. Elimina cualquier alucinación de leyes falsas. Usa el Art 8 Constitucional si no estás seguro de la ley local.
+                    2. ELIMINA por completo cualquier firma, mención o línea que diga "Abogado", "Abogado Pro Bono", "Representante Legal" o "Cédula Profesional". El escrito debe terminar obligatoriamente con la firma del ciudadano afectado.
+                    
+                    BORRADOR A LIMPIAR: 
+                    {respuesta_borrador_p}
                     """
                     respuesta_final_p = model.generate_content(prompt_revision_p).text.replace("**", "").replace("*", "").replace("#", "")
                     
@@ -170,7 +178,6 @@ with tab_kiosco:
         </style>
     """, unsafe_allow_html=True)
 
-    # TEXTO INCLUSIVO RESTAURADO
     st.info("💡 **JUSTICIA INCLUSIVA:** Si hablas Español, Náhuatl, Maya, Tseltal, Tsotsil, Mixteco o Zapoteco, graba tu voz aquí. La IA activará tus derechos lingüísticos y redactará el documento en español formal.")
 
     if st.button("🆘 NECESITO AYUDA HUMANA", type="primary", use_container_width=True, key="ayuda_k"):
@@ -192,7 +199,6 @@ with tab_kiosco:
     st.markdown("### 2️⃣ Toca el micrófono. Dinos tu Nombre y cuál es el problema:")
     audio_grabado_k = st.audio_input("🎤 TOCA AQUÍ PARA HABLAR", key="audio_k")
 
-    # CARGA DE EVIDENCIA EN MODO VOZ AGREGADA
     st.markdown("### 3️⃣ Sube una foto de evidencia (Opcional):")
     archivo_evidencia_k = st.file_uploader("Sube una foto de tu multa o documento:", type=['png', 'jpg', 'jpeg', 'pdf'], key="evid_k")
 
@@ -205,24 +211,27 @@ with tab_kiosco:
                     
                     status_k.update(label="⏳ Paso 1/2: Analizando audio e imágenes...", state="running")
                     prompt_k = f"""
-                    ERES UN ABOGADO PRO BONO. Audio sobre: {st.session_state['categoria_k']}.
-                    Si el ciudadano habla lengua indígena, invoca el Art. 2 Constitucional.
-                    Genera respuesta separada por "DIVISOR_K".
-                    PARTE 1: Resumen hablado ("Hola [Nombre], ya terminé...").
+                    Actúas como un asistente legal experto en México. Audio sobre: {st.session_state['categoria_k']}.
+                    Genera tu respuesta separada EXACTAMENTE por la palabra "DIVISOR_K".
+                    
+                    PARTE 1: Un resumen hablado amable en español simple ("Hola, ya terminé tu documento...").
                     DIVISOR_K
-                    PARTE 2: Oficio legal en primera persona.
+                    PARTE 2: El oficio legal completo, redactado en PRIMERA PERSONA ("yo, comparezco por mi propio derecho").
+                    
+                    INSTRUCCIONES ESTRICTAS PARA LA PARTE 2:
+                    1. El documento DEBE estar preparado para que lo firme exclusivamente el ciudadano afectado.
+                    2. NO inventes nombres de abogados, NO firmes como "Abogado Pro Bono", ni dejes líneas para "Cédula Profesional".
+                    3. Si detectas que el ciudadano habla lengua indígena en el audio, invoca el Art. 2 Constitucional.
                     """
                     
                     contenido_prompt_k = []
                     
-                    # Cargar Audio
                     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as t:
                         t.write(audio_grabado_k.getvalue())
                         archivos_temporales_k.append(t.name)
                         audio_ia_k = genai.upload_file(t.name)
                         contenido_prompt_k.append(audio_ia_k)
 
-                    # Cargar Evidencia (si existe)
                     if archivo_evidencia_k:
                         with tempfile.NamedTemporaryFile(delete=False, suffix=f".{archivo_evidencia_k.name.split('.')[-1]}") as t:
                             t.write(archivo_evidencia_k.getvalue())
@@ -240,7 +249,12 @@ with tab_kiosco:
                         oficio_borrador_k = partes[1].replace("*", "").replace("#", "").strip()
                         
                         status_k.update(label="🔍 Paso 2/2: Verificando leyes...", state="running")
-                        prompt_revision_k = f"ERES UN REVISOR LEGAL. Elimina alucinaciones del borrador: {oficio_borrador_k}"
+                        prompt_revision_k = f"""
+                        ERES UN REVISOR LEGAL ESTRICTO. Tu trabajo es limpiar este borrador:
+                        1. Elimina alucinaciones de leyes.
+                        2. ELIMINA cualquier firma de abogado, licenciado o solicitud de cédula profesional. El texto debe terminar con la firma en blanco para el ciudadano.
+                        BORRADOR: {oficio_borrador_k}
+                        """
                         oficio_revisado_k = model.generate_content(prompt_revision_k).text.replace("**", "").replace("*", "").replace("#", "")
                         
                         st.session_state['oficio_k'] = oficio_revisado_k
@@ -305,4 +319,4 @@ with st.expander("🔒 AVISO DE PRIVACIDAD SIMPLIFICADO"):
     **4. Transferencia de Datos:** Para poder funcionar, los datos se procesan de manera cifrada a través de las interfaces de programación (APIs) de Google y Streamlit. Al usar esta plataforma, usted consiente este procesamiento automatizado de terceros para la generación de su documento.
     """)
 
-st.caption("© 2026 Aliado Ciudadano v1.0 | Desarrollado para el Acceso a la Justicia Social en México.")
+st.caption("© 2026 Aliado Ciudadano v1.0 | Desarrollado para el Acceso a la Justicia Social en México." por Juan Manuel Villegas Gonzalez)
