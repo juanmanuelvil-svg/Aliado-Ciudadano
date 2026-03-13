@@ -211,7 +211,7 @@ with tab_kiosco:
             with st.status("⚙️ Escuchando y procesando tu voz...", expanded=True) as status_k:
                 archivos_temporales_k = []
                 try:
-                    model = genai.GenerativeModel('gemini-2.5-flash')
+                    model = genai.GenerativeModel('gemini-2.5-flash-lite')
                     
                     status_k.update(label="⏳ Paso 1/2: Analizando audio e imágenes...", state="running")
                     prompt_k = f"""
