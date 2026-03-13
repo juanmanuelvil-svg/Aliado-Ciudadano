@@ -55,11 +55,11 @@ st.markdown("<h1 style='text-align: center; color: #0d6efd;'>🤝 ALIADO CIUDADA
 st.markdown("<h5 style='text-align: center; color: #495057;'>Tu Gestor y Acompañante Legal</h5>", unsafe_allow_html=True)
 st.divider()
 
-# --- CREACIÓN DE PESTAÑAS (TABS) CORREGIDAS ---
+# --- CREACIÓN DE PESTAÑAS (TABS) ---
 tab_formulario, tab_kiosco = st.tabs(["📝 MODO FORMULARIO (Escrito)", "🗣️ MODO VOZ (Dictado)"])
 
 # =====================================================================
-# PESTAÑA 1: MODO FORMULARIO (ESCRITO)
+# PESTAÑA 1: MODO FORMULARIO (ESCRITO Y DICTADO)
 # =====================================================================
 with tab_formulario:
     st.info("💡 **JUSTICIA INCLUSIVA:** Si hablas Español, Náhuatl, Maya, Tseltal, Tsotsil, Mixteco o Zapoteco, graba tu voz aquí. La IA activará tus derechos lingüísticos y redactará el documento en español formal.")
@@ -91,7 +91,7 @@ with tab_formulario:
         if not nombre_p or (not historia_texto_p and not audio_grabado_p):
             st.warning("⚠️ Faltan datos: Nombre y Descripción (escrita o por voz) son obligatorios.")
         else:
-            with st.status("⚙️ Procesando el caso legal (Modo Formulario)...", expanded=True) as status_p:
+            with st.status("⚙️ Procesando el caso legal...", expanded=True) as status_p:
                 archivos_temporales_p = []
                 try:
                     model = genai.GenerativeModel('gemini-2.5-flash')
@@ -130,12 +130,15 @@ with tab_formulario:
                     contenido_prompt_p.append(prompt_borrador_p)
                     respuesta_borrador_p = model.generate_content(contenido_prompt_p).text
                     
-                    # PASO 2: REVISIÓN
+                    # PASO 2: REVISIÓN (ANTI-PLÁTICA)
                     status_p.update(label="🔍 Paso 2/2: Verificando fundamentos legales...", state="running")
                     prompt_revision_p = f"""
-                    ERES UN REVISOR LEGAL ESTRICTO. Tu trabajo es limpiar el siguiente borrador:
-                    1. Elimina cualquier alucinación de leyes falsas. Usa el Art 8 Constitucional si no estás seguro de la ley local.
-                    2. ELIMINA por completo cualquier firma, mención o línea que diga "Abogado", "Abogado Pro Bono", "Representante Legal" o "Cédula Profesional". El escrito debe terminar obligatoriamente con la firma del ciudadano afectado.
+                    Actúas como un filtro de texto automatizado. Tu ÚNICA tarea es devolver el borrador corregido según estas reglas:
+                    1. Eliminar cualquier ley inventada. Usa el Art 8 Constitucional si no estás seguro de la ley local.
+                    2. Eliminar cualquier firma de abogado, cédula o representante legal (solo debe firmar el ciudadano).
+                    
+                    REGLA DE ORO: ESTÁ ESTRICTAMENTE PROHIBIDO incluir comentarios tuyos, saludos, explicaciones como "El borrador ha sido corregido", "Cumple estrictamente" o "Aquí tienes el documento".
+                    DEVUELVE SOLO EL TEXTO DEL OFICIO LEGAL PURO. NO ESCRIBAS NADA MÁS.
                     
                     BORRADOR A LIMPIAR: 
                     {respuesta_borrador_p}
@@ -159,7 +162,8 @@ with tab_formulario:
         with col_w_p:
             st.download_button("💾 DESCARGAR EN WORD", data=crear_word(st.session_state['oficio_p']), file_name=f"Oficio_{nombre_p}.docx", type="primary", use_container_width=True, key="dw_p")
         with col_wh_p:
-            msg_p = urllib.parse.quote(f"Hola, adjunto el documento redactado:\n\n{st.session_state['oficio_p']}")
+            # TEXTO DE WHATSAPP CORREGIDO
+            msg_p = urllib.parse.quote(f"Hola, necesito ayuda para imprimir este documento oficial:\n\n{st.session_state['oficio_p']}")
             st.link_button("📲 ENVIAR POR WHATSAPP", url=f"https://api.whatsapp.com/send?text={msg_p}", use_container_width=True)
 
         if st.button("🗑️ LIMPIAR TODO", use_container_width=True, key="limpiar_p"):
@@ -168,7 +172,7 @@ with tab_formulario:
             st.rerun()
 
 # =====================================================================
-# PESTAÑA 2: MODO VOZ (DICTADO)
+# PESTAÑA 2: MODO VOZ (DICTADO PURO / KIOSCO)
 # =====================================================================
 with tab_kiosco:
     st.markdown("""
@@ -248,11 +252,16 @@ with tab_kiosco:
                         resumen_hablado_k = partes[0].replace("*", "").strip()
                         oficio_borrador_k = partes[1].replace("*", "").replace("#", "").strip()
                         
+                        # PASO 2: REVISIÓN (ANTI-PLÁTICA)
                         status_k.update(label="🔍 Paso 2/2: Verificando leyes...", state="running")
                         prompt_revision_k = f"""
-                        ERES UN REVISOR LEGAL ESTRICTO. Tu trabajo es limpiar este borrador:
+                        Actúas como un filtro de texto automatizado. Tu ÚNICA tarea es devolver el borrador corregido:
                         1. Elimina alucinaciones de leyes.
                         2. ELIMINA cualquier firma de abogado, licenciado o solicitud de cédula profesional. El texto debe terminar con la firma en blanco para el ciudadano.
+                        
+                        REGLA DE ORO: ESTÁ ESTRICTAMENTE PROHIBIDO incluir comentarios tuyos, saludos, explicaciones como "El documento ha sido ajustado", o "Aquí está listo".
+                        DEVUELVE SOLO EL TEXTO DEL OFICIO LEGAL PURO. NO ESCRIBAS NADA MÁS.
+                        
                         BORRADOR: {oficio_borrador_k}
                         """
                         oficio_revisado_k = model.generate_content(prompt_revision_k).text.replace("**", "").replace("*", "").replace("#", "")
@@ -280,7 +289,8 @@ with tab_kiosco:
         with col_dw_k:
             st.download_button("🖨️ DESCARGAR EN WORD", data=crear_word(st.session_state['oficio_k']), file_name="Oficio_Dictado.docx", type="primary", use_container_width=True, key="dw_k")
         with col_wpp_k:
-            msg_k = urllib.parse.quote(f"Hola, documento oficial:\n\n{st.session_state['oficio_k']}")
+            # TEXTO DE WHATSAPP CORREGIDO
+            msg_k = urllib.parse.quote(f"Hola, necesito ayuda para imprimir este documento oficial:\n\n{st.session_state['oficio_k']}")
             st.link_button("📲 ENVIAR POR WHATSAPP", url=f"https://api.whatsapp.com/send?text={msg_k}", use_container_width=True)
         
         with st.expander("👀 Ver el documento escrito"):
