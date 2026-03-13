@@ -319,4 +319,4 @@ with st.expander("🔒 AVISO DE PRIVACIDAD SIMPLIFICADO"):
     **4. Transferencia de Datos:** Para poder funcionar, los datos se procesan de manera cifrada a través de las interfaces de programación (APIs) de Google y Streamlit. Al usar esta plataforma, usted consiente este procesamiento automatizado de terceros para la generación de su documento.
     """)
 
-st.caption("© 2026 Aliado Ciudadano v1.0 | Desarrollado para el Acceso a la Justicia Social en México." por Juan Manuel Villegas Gonzalez)
+st.caption("© 2026 Aliado Ciudadano v1.0 | Desarrollado para el Acceso a la Justicia Social en México.")
