@@ -55,13 +55,13 @@ st.markdown("<h1 style='text-align: center; color: #0d6efd;'>🤝 ALIADO CIUDADA
 st.markdown("<h5 style='text-align: center; color: #495057;'>Tu Gestor y Acompañante Legal</h5>", unsafe_allow_html=True)
 st.divider()
 
-# --- CREACIÓN DE PESTAÑAS (TABS) ---
-tab_profesional, tab_kiosco = st.tabs(["💼 MODO PROFESIONAL (Gestores)", "🗣️ MODO KIOSCO (Ciudadanos)"])
+# --- CREACIÓN DE PESTAÑAS (TABS) CORREGIDAS ---
+tab_formulario, tab_kiosco = st.tabs(["📝 MODO FORMULARIO (Escrito)", "🗣️ MODO VOZ (Dictado)"])
 
 # =====================================================================
-# PESTAÑA 1: MODO PROFESIONAL (ESCRITO)
+# PESTAÑA 1: MODO FORMULARIO (ESCRITO)
 # =====================================================================
-with tab_profesional:
+with tab_formulario:
     st.subheader("Paso 1: Datos del Ciudadano")
     col1, col2 = st.columns(2)
     with col1:
@@ -82,13 +82,13 @@ with tab_profesional:
 
     st.subheader("Paso 3: Hechos y Evidencia")
     historia_texto_p = st.text_area("⌨️ Describe el problema detalladamente:", height=100, key="hist_p")
-    archivo_evidencia_p = st.file_uploader("Sube una foto de evidencia (Opcional):", type=['png', 'jpg', 'pdf'], key="evid_p")
+    archivo_evidencia_p = st.file_uploader("Sube una foto de evidencia (Opcional):", type=['png', 'jpg', 'jpeg', 'pdf'], key="evid_p")
 
     if st.button("✨ REDACTAR DEFENSA LEGAL", use_container_width=True, type="primary", key="btn_prof"):
         if not nombre_p or not historia_texto_p:
             st.warning("⚠️ Faltan datos: Nombre e Historia son obligatorios.")
         else:
-            with st.status("⚙️ Procesando el caso legal (Modo Profesional)...", expanded=True) as status_p:
+            with st.status("⚙️ Procesando el caso legal (Modo Formulario)...", expanded=True) as status_p:
                 archivos_temporales_p = []
                 try:
                     model = genai.GenerativeModel('gemini-2.5-flash')
@@ -133,7 +133,7 @@ with tab_profesional:
 
     # RESULTADO PROFESIONAL
     if 'oficio_p' in st.session_state:
-        st.success("✅ ¡Documento Profesional Generado!")
+        st.success("✅ ¡Documento Generado!")
         st.text_area("Vista Previa:", value=st.session_state['oficio_p'], height=300, key="vista_p")
         
         col_w_p, col_wh_p = st.columns(2)
@@ -144,7 +144,7 @@ with tab_profesional:
             st.link_button("📲 ENVIAR POR WHATSAPP", url=f"https://api.whatsapp.com/send?text={msg_p}", use_container_width=True)
 
 # =====================================================================
-# PESTAÑA 2: MODO KIOSCO (VOZ Y BOTONES GIGANTES)
+# PESTAÑA 2: MODO VOZ (DICTADO)
 # =====================================================================
 with tab_kiosco:
     st.markdown("""
@@ -153,6 +153,9 @@ with tab_kiosco:
         div.stButton > button:first-child { height: 80px; font-size: 20px; border-radius: 12px; }
         </style>
     """, unsafe_allow_html=True)
+
+    # TEXTO INCLUSIVO RESTAURADO
+    st.info("💡 **JUSTICIA INCLUSIVA:** Si hablas Español, Náhuatl, Maya, Tseltal, Tsotsil, Mixteco o Zapoteco, graba tu voz aquí. La IA activará tus derechos lingüísticos y redactará el documento en español formal.")
 
     if st.button("🆘 NECESITO AYUDA HUMANA", type="primary", use_container_width=True, key="ayuda_k"):
         st.error("🚨 **ALERTA VISUAL:** POR FAVOR, UN ASESOR ACÉRQUESE A AYUDAR AL CIUDADANO.")
@@ -168,10 +171,14 @@ with tab_kiosco:
         if st.button("🚓 Multas y Policía", use_container_width=True): st.session_state['categoria_k'] = "Seguridad y Multas"
         if st.button("🌾 Apoyo y Gobierno", use_container_width=True): st.session_state['categoria_k'] = "Programas Sociales"
     
-    st.info(f"✅ Tema: **{st.session_state['categoria_k']}**")
+    st.success(f"✅ Tema seleccionado: **{st.session_state['categoria_k']}**")
 
     st.markdown("### 2️⃣ Toca el micrófono. Dinos tu Nombre y cuál es el problema:")
     audio_grabado_k = st.audio_input("🎤 TOCA AQUÍ PARA HABLAR", key="audio_k")
+
+    # CARGA DE EVIDENCIA EN MODO VOZ AGREGADA
+    st.markdown("### 3️⃣ Sube una foto de evidencia (Opcional):")
+    archivo_evidencia_k = st.file_uploader("Sube una foto de tu multa o documento:", type=['png', 'jpg', 'jpeg', 'pdf'], key="evid_k")
 
     if audio_grabado_k:
         if st.button("🚀 HACER MI DOCUMENTO", use_container_width=True, type="primary", key="btn_k"):
@@ -180,21 +187,36 @@ with tab_kiosco:
                 try:
                     model = genai.GenerativeModel('gemini-2.5-flash')
                     
-                    status_k.update(label="⏳ Paso 1/2: Analizando audio...", state="running")
+                    status_k.update(label="⏳ Paso 1/2: Analizando audio e imágenes...", state="running")
                     prompt_k = f"""
                     ERES UN ABOGADO PRO BONO. Audio sobre: {st.session_state['categoria_k']}.
+                    Si el ciudadano habla lengua indígena, invoca el Art. 2 Constitucional.
                     Genera respuesta separada por "DIVISOR_K".
                     PARTE 1: Resumen hablado ("Hola [Nombre], ya terminé...").
                     DIVISOR_K
                     PARTE 2: Oficio legal en primera persona.
                     """
                     
+                    contenido_prompt_k = []
+                    
+                    # Cargar Audio
                     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as t:
                         t.write(audio_grabado_k.getvalue())
                         archivos_temporales_k.append(t.name)
                         audio_ia_k = genai.upload_file(t.name)
+                        contenido_prompt_k.append(audio_ia_k)
+
+                    # Cargar Evidencia (si existe)
+                    if archivo_evidencia_k:
+                        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{archivo_evidencia_k.name.split('.')[-1]}") as t:
+                            t.write(archivo_evidencia_k.getvalue())
+                            archivos_temporales_k.append(t.name)
+                            evid_ia_k = genai.upload_file(t.name)
+                            contenido_prompt_k.append(evid_ia_k)
+
+                    contenido_prompt_k.append(prompt_k)
                     
-                    respuesta_borrador_k = model.generate_content([audio_ia_k, prompt_k]).text
+                    respuesta_borrador_k = model.generate_content(contenido_prompt_k).text
                     partes = respuesta_borrador_k.split("DIVISOR_K")
                     
                     if len(partes) == 2:
@@ -226,7 +248,7 @@ with tab_kiosco:
         
         col_dw_k, col_wpp_k = st.columns(2)
         with col_dw_k:
-            st.download_button("🖨️ DESCARGAR EN WORD", data=crear_word(st.session_state['oficio_k']), file_name="Oficio_Kiosco.docx", type="primary", use_container_width=True, key="dw_k")
+            st.download_button("🖨️ DESCARGAR EN WORD", data=crear_word(st.session_state['oficio_k']), file_name="Oficio_Dictado.docx", type="primary", use_container_width=True, key="dw_k")
         with col_wpp_k:
             msg_k = urllib.parse.quote(f"Hola, documento oficial:\n\n{st.session_state['oficio_k']}")
             st.link_button("📲 ENVIAR POR WHATSAPP", url=f"https://api.whatsapp.com/send?text={msg_k}", use_container_width=True)
