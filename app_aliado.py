@@ -62,6 +62,8 @@ tab_formulario, tab_kiosco = st.tabs(["📝 MODO FORMULARIO (Escrito)", "🗣️
 # PESTAÑA 1: MODO FORMULARIO (ESCRITO)
 # =====================================================================
 with tab_formulario:
+    st.info("💡 **JUSTICIA INCLUSIVA:** Si hablas Español, Náhuatl, Maya, Tseltal, Tsotsil, Mixteco o Zapoteco, graba tu voz aquí. La IA activará tus derechos lingüísticos y redactará el documento en español formal.")
+    
     st.subheader("Paso 1: Datos del Ciudadano")
     col1, col2 = st.columns(2)
     with col1:
@@ -82,11 +84,12 @@ with tab_formulario:
 
     st.subheader("Paso 3: Hechos y Evidencia")
     historia_texto_p = st.text_area("⌨️ Describe el problema detalladamente:", height=100, key="hist_p")
+    audio_grabado_p = st.audio_input("🎤 O si prefieres, díctalo aquí (Voz):", key="audio_p")
     archivo_evidencia_p = st.file_uploader("Sube una foto de evidencia (Opcional):", type=['png', 'jpg', 'jpeg', 'pdf'], key="evid_p")
 
     if st.button("✨ REDACTAR DEFENSA LEGAL", use_container_width=True, type="primary", key="btn_prof"):
-        if not nombre_p or not historia_texto_p:
-            st.warning("⚠️ Faltan datos: Nombre e Historia son obligatorios.")
+        if not nombre_p or (not historia_texto_p and not audio_grabado_p):
+            st.warning("⚠️ Faltan datos: Nombre y Descripción (escrita o por voz) son obligatorios.")
         else:
             with st.status("⚙️ Procesando el caso legal (Modo Formulario)...", expanded=True) as status_p:
                 archivos_temporales_p = []
@@ -100,10 +103,18 @@ with tab_formulario:
                     prompt_borrador_p = f"""
                     ERES UN ABOGADO PRO BONO MEXICANO. Redacta un oficio en PRIMERA PERSONA ("yo, comparezco").
                     Nombre: {nombre_p} | Contacto: {contacto_p} | Autoridad: {dep_final_p} | Trámite: {tipo_tramite_p}
-                    Hechos: {historia_texto_p}
+                    Hechos: {historia_texto_p if historia_texto_p else 'Revisar audio adjunto.'}
+                    Si hay audio y el ciudadano habla lengua indígena, invoca el Art. 2 Constitucional.
                     Formato texto plano puro.
                     """
                     
+                    if audio_grabado_p:
+                        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as t:
+                            t.write(audio_grabado_p.getvalue())
+                            archivos_temporales_p.append(t.name)
+                            audio_ia_p = genai.upload_file(t.name)
+                            contenido_prompt_p.append(audio_ia_p)
+
                     if archivo_evidencia_p:
                         with tempfile.NamedTemporaryFile(delete=False, suffix=f".{archivo_evidencia_p.name.split('.')[-1]}") as t:
                             t.write(archivo_evidencia_p.getvalue())
@@ -142,6 +153,11 @@ with tab_formulario:
         with col_wh_p:
             msg_p = urllib.parse.quote(f"Hola, adjunto el documento redactado:\n\n{st.session_state['oficio_p']}")
             st.link_button("📲 ENVIAR POR WHATSAPP", url=f"https://api.whatsapp.com/send?text={msg_p}", use_container_width=True)
+
+        if st.button("🗑️ LIMPIAR TODO", use_container_width=True, key="limpiar_p"):
+            for key in ['oficio_p']: 
+                if key in st.session_state: del st.session_state[key]
+            st.rerun()
 
 # =====================================================================
 # PESTAÑA 2: MODO VOZ (DICTADO)
@@ -253,11 +269,40 @@ with tab_kiosco:
             msg_k = urllib.parse.quote(f"Hola, documento oficial:\n\n{st.session_state['oficio_k']}")
             st.link_button("📲 ENVIAR POR WHATSAPP", url=f"https://api.whatsapp.com/send?text={msg_k}", use_container_width=True)
         
+        with st.expander("👀 Ver el documento escrito"):
+            st.text_area("Oficio:", value=st.session_state['oficio_k'], height=300, key="vista_k_aliado")
+
         if st.button("🗑️ EMPEZAR DE NUEVO", use_container_width=True, key="reset_k"):
             for key in ['oficio_k', 'resumen_k', 'categoria_k']: 
                 if key in st.session_state: del st.session_state[key]
             st.rerun()
 
-# --- AVISOS LEGALES GLOBALES ---
-st.divider()
-st.caption("© 2026 Aliado Ciudadano | Desarrollado por Juan Manuel Villegas.")
+# --- 7. AVISOS LEGALES Y DE PRIVACIDAD GLOBALES ---
+st.write("---")
+st.markdown("<h5 style='text-align: center; color: #6c757d;'>Información Legal y Transparencia</h5>", unsafe_allow_html=True)
+
+with st.expander("⚖️ AVISO LEGAL Y LÍMITES DE RESPONSABILIDAD (LEER ANTES DE USAR)"):
+    st.markdown("""
+    **1. No es Asesoría Legal Humana:** "Aliado Ciudadano" es una herramienta tecnológica experimental impulsada por Inteligencia Artificial (IA). No sustituye el consejo, la representación, ni la revisión de un abogado titulado con Cédula Profesional.
+    
+    **2. Limitaciones de la Tecnología:** La Inteligencia Artificial puede cometer errores, citar artículos derogados, o interpretar incorrectamente el contexto o la traducción de lenguas originarias (alucinaciones de IA).
+    
+    **3. Responsabilidad del Usuario:** El documento generado es un "borrador" o "formato sugerido". Es responsabilidad absoluta y exclusiva del usuario o del asesor que lo acompaña leer, verificar, corregir y validar el contenido, los fundamentos legales y sus datos personales antes de firmarlo o presentarlo ante cualquier autoridad.
+    
+    **4. Deslinde de Responsabilidad:** El creador de este software y la plataforma de alojamiento no asumen ninguna responsabilidad legal, civil, penal o administrativa por el resultado de los trámites, rechazos de autoridades, daños, o perjuicios derivados del uso de los textos generados por este sistema.
+    """)
+
+with st.expander("🔒 AVISO DE PRIVACIDAD SIMPLIFICADO"):
+    st.markdown("""
+    De conformidad con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP), se informa lo siguiente:
+    
+    **1. Identidad del Responsable:** El proyecto independiente "Aliado Ciudadano" (desarrollado por Juan Manuel Villegas) es el responsable del tratamiento temporal de los datos recabados en este sitio.
+    
+    **2. Datos Recabados y Finalidad:** Los datos proporcionados mediante texto, voz (audio) o fotografías (evidencias) se utilizarán **exclusivamente** para redactar y estructurar el documento legal solicitado en tiempo real.
+    
+    **3. Almacenamiento y Borrado:** Esta plataforma NO almacena sus datos en bases de datos permanentes. La información, audios y evidencias existen únicamente durante su sesión activa (memoria caché) y se eliminan irreversiblemente al presionar el botón de limpiar o al cerrar el navegador.
+    
+    **4. Transferencia de Datos:** Para poder funcionar, los datos se procesan de manera cifrada a través de las interfaces de programación (APIs) de Google y Streamlit. Al usar esta plataforma, usted consiente este procesamiento automatizado de terceros para la generación de su documento.
+    """)
+
+st.caption("© 2026 Aliado Ciudadano v1.0 | Desarrollado para el Acceso a la Justicia Social en México.")
