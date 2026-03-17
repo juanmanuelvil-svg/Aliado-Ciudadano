@@ -21,10 +21,11 @@ except KeyError:
     st.error("⚠️ Falta configurar la Llave API en los Secrets.")
     st.stop()
 
-# ACTIVACIÓN DEL MODELO DE PAGO CON BÚSQUEDA (Sintaxis de diccionario asegurada)
+# ACTIVACIÓN DEL MODELO DE PAGO CON BÚSQUEDA 
+# (Alineado a la documentación oficial de Gemini 2.5 Flash)
 model_pro = genai.GenerativeModel(
     model_name='gemini-2.5-flash',
-    tools=[{"google_search_retrieval": {}}] 
+    tools='google_search' 
 )
 
 # --- FUNCIONES GLOBALES (Word y Voz) ---
@@ -95,7 +96,6 @@ with tab_formulario:
     historia_texto_p = st.text_area("⌨️ Describe el problema detalladamente:", height=100, key="hist_p")
     audio_grabado_p = st.audio_input("🎤 O si prefieres, díctalo aquí (Voz):", key="audio_p")
     
-    # Aceptar múltiples archivos (fotos, libretas, multas, audios extra)
     archivos_evidencia_p = st.file_uploader("Sube fotos (notas a mano, multas) o audios extra (Opcional, máximo 5):", 
                                           type=['png', 'jpg', 'jpeg', 'pdf', 'mp3', 'wav', 'm4a'], 
                                           accept_multiple_files=True, key="evid_p")
@@ -107,11 +107,11 @@ with tab_formulario:
             with st.status("⚙️ Consultando Google Search y procesando el caso...", expanded=True) as status_p:
                 archivos_temporales_p = []
                 try:
-                    status_p.update(label="⏳ Analizando evidencias y redactando...", state="running")
+                    status_p.update(label="⏳ Analizando evidencias y redactando con leyes actuales...", state="running")
                     contenido_prompt_p = []
                     
                     prompt_borrador_p = f"""
-                    Actúas como un asistente legal experto en México. Usa GOOGLE SEARCH para fundamentar con leyes VIGENTES (2026).
+                    Actúas como un asistente legal experto en México. Usa GOOGLE SEARCH para fundamentar con leyes VIGENTES en 2026.
                     
                     DATOS:
                     Nombre: {nombre_p} | Contacto: {contacto_p} | Autoridad: {dep_final_p} | Trámite: {tipo_tramite_p}
