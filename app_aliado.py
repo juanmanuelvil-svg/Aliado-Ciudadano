@@ -21,10 +21,10 @@ except KeyError:
     st.error("⚠️ Falta configurar la Llave API en los Secrets.")
     st.stop()
 
-# ACTIVACIÓN DEL MODELO DE PAGO CON BÚSQUEDA
+# ACTIVACIÓN DEL MODELO DE PAGO CON BÚSQUEDA (¡Corregido!)
 model_pro = genai.GenerativeModel(
     model_name='gemini-2.5-flash',
-    tools=[{"google_search": {}}] 
+    tools='google_search' 
 )
 
 # --- FUNCIONES GLOBALES (Word y Voz) ---
@@ -95,7 +95,7 @@ with tab_formulario:
     historia_texto_p = st.text_area("⌨️ Describe el problema detalladamente:", height=100, key="hist_p")
     audio_grabado_p = st.audio_input("🎤 O si prefieres, díctalo aquí (Voz):", key="audio_p")
     
-    # MEJORA: Aceptar múltiples archivos
+    # Aceptar múltiples archivos
     archivos_evidencia_p = st.file_uploader("Sube fotos (notas a mano, multas) o más audios (Opcional, máximo 5):", 
                                           type=['png', 'jpg', 'jpeg', 'pdf', 'mp3', 'wav', 'm4a'], 
                                           accept_multiple_files=True, key="evid_p")
@@ -110,7 +110,6 @@ with tab_formulario:
                     status_p.update(label="⏳ Analizando evidencias y redactando...", state="running")
                     contenido_prompt_p = []
                     
-                    # PROMPT MAESTRO ACTUALIZADO
                     prompt_borrador_p = f"""
                     Actúas como un asistente legal experto en México. Usa GOOGLE SEARCH para fundamentar con leyes VIGENTES (2026).
                     
@@ -143,7 +142,6 @@ with tab_formulario:
 
                     contenido_prompt_p.append(prompt_borrador_p)
                     
-                    # Ejecución directa con Gemini 2.5 Flash
                     respuesta_final_p = model_pro.generate_content(contenido_prompt_p).text.replace("**", "").replace("*", "").replace("#", "")
                     
                     st.session_state['oficio_p'] = respuesta_final_p
@@ -214,7 +212,6 @@ with tab_kiosco:
                 try:
                     status_k.update(label="⏳ Redactando oficio legal...", state="running")
                     
-                    # PROMPT KIOSCO ACTUALIZADO (Con búsqueda, fecha y derechos)
                     prompt_k = f"""
                     Actúas como un asistente legal experto en México. Usa GOOGLE SEARCH para leyes de: {st.session_state['categoria_k']}.
                     Genera tu respuesta separada EXACTAMENTE por la palabra "DIVISOR_K".
@@ -289,7 +286,31 @@ with tab_kiosco:
             st.rerun()
 
 # --- AVISOS LEGALES GLOBALES ---
-# (Se mantienen exactamente igual a tu versión)
 st.write("---")
 st.markdown("<h5 style='text-align: center; color: #6c757d;'>Información Legal y Transparencia</h5>", unsafe_allow_html=True)
-# ... [Tus expaders de Aviso Legal y Privacidad aquí]
+
+with st.expander("⚖️ AVISO LEGAL Y LÍMITES DE RESPONSABILIDAD (LEER ANTES DE USAR)"):
+    st.markdown("""
+    **1. No es Asesoría Legal Humana:** "Aliado Ciudadano" es una herramienta tecnológica experimental impulsada por Inteligencia Artificial (IA). No sustituye el consejo, la representación, ni la revisión de un abogado titulado con Cédula Profesional.
+    
+    **2. Limitaciones de la Tecnología:** La Inteligencia Artificial puede cometer errores, citar artículos derogados, o interpretar incorrectamente el contexto o la traducción de lenguas originarias (alucinaciones de IA).
+    
+    **3. Responsabilidad del Usuario:** El documento generado es un "borrador" o "formato sugerido". Es responsabilidad absoluta y exclusiva del usuario o del asesor que lo acompaña leer, verificar, corregir y validar el contenido, los fundamentos legales y sus datos personales antes de firmarlo o presentarlo ante cualquier autoridad.
+    
+    **4. Deslinde de Responsabilidad:** El creador de este software y la plataforma de alojamiento no asumen ninguna responsabilidad legal, civil, penal o administrativa por el resultado de los trámites, rechazos de autoridades, daños, o perjuicios derivados del uso de los textos generados por este sistema.
+    """)
+
+with st.expander("🔒 AVISO DE PRIVACIDAD SIMPLIFICADO"):
+    st.markdown("""
+    De conformidad con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP), se informa lo siguiente:
+    
+    **1. Identidad del Responsable:** El proyecto independiente "Aliado Ciudadano" (desarrollado por Juan Manuel Villegas) es el responsable del tratamiento temporal de los datos recabados en este sitio.
+    
+    **2. Datos Recabados y Finalidad:** Los datos proporcionados mediante texto, voz (audio) o fotografías (evidencias) se utilizarán **exclusivamente** para redactar y estructurar el documento legal solicitado en tiempo real.
+    
+    **3. Almacenamiento y Borrado:** Esta plataforma NO almacena sus datos en bases de datos permanentes. La información, audios y evidencias existen únicamente durante su sesión activa (memoria caché) y se eliminan irreversiblemente al presionar el botón de limpiar o al cerrar el navegador.
+    
+    **4. Transferencia de Datos:** Para poder funcionar, los datos se procesan de manera cifrada a través de las interfaces de programación (APIs) de Google y Streamlit. Al usar esta plataforma, usted consiente este procesamiento automatizado de terceros para la generación de su documento.
+    """)
+
+st.caption("© 2026 Aliado Ciudadano v1.0 | Desarrollado para el Acceso a la Justicia Social en México.")
