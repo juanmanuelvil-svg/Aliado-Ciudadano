@@ -40,16 +40,18 @@ def reproducir_audio(texto):
         tts = gTTS(text=texto, lang='es', slow=False)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
             tts.save(fp.name)
-            with open(fp.name, "rb") as f:
-                data = f.read()
-                b64 = base64.b64encode(data).decode()
-                md = f"""
-                    <audio autoplay="true">
-                    <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-                    </audio>
-                    """
-                st.markdown(md, unsafe_allow_html=True)
-            os.remove(fp.name)
+            ruta_audio = fp.name
+        
+        with open(ruta_audio, "rb") as f:
+            data = f.read()
+            b64 = base64.b64encode(data).decode()
+            md = f"""
+                <audio autoplay="true">
+                <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+                </audio>
+                """
+            st.markdown(md, unsafe_allow_html=True)
+        os.remove(ruta_audio)
     except Exception as e:
         st.error(f"Error reproduciendo audio: {e}")
 
@@ -126,21 +128,24 @@ with tab_formulario:
                     5. FIRMA: Al final solo debe ir "Atentamente" y ({nombre_p}). NUNCA firmes como "Abogado".
                     """
                     
+                    # CORRECCIÓN ERROR 500: Cerrar archivo temporal antes de subirlo
                     if audio_grabado_p:
                         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as t:
                             t.write(audio_grabado_p.getvalue())
-                            archivos_temporales_p.append(t.name)
-                            audio_ia_p = genai.upload_file(t.name)
-                            contenido_prompt_p.append(audio_ia_p)
+                            ruta_tmp_audio = t.name
+                        archivos_temporales_p.append(ruta_tmp_audio)
+                        audio_ia_p = genai.upload_file(ruta_tmp_audio)
+                        contenido_prompt_p.append(audio_ia_p)
 
                     if archivos_evidencia_p:
                         for archivo in archivos_evidencia_p:
                             ext = f".{archivo.name.split('.')[-1]}"
                             with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as t:
                                 t.write(archivo.getvalue())
-                                archivos_temporales_p.append(t.name)
-                                evid_ia_p = genai.upload_file(t.name)
-                                contenido_prompt_p.append(evid_ia_p)
+                                ruta_tmp_evid = t.name
+                            archivos_temporales_p.append(ruta_tmp_evid)
+                            evid_ia_p = genai.upload_file(ruta_tmp_evid)
+                            contenido_prompt_p.append(evid_ia_p)
 
                     contenido_prompt_p.append(prompt_borrador_p)
                     respuesta_borrador_p = model.generate_content(contenido_prompt_p).text
@@ -256,20 +261,23 @@ with tab_kiosco:
                     
                     contenido_prompt_k = []
                     
+                    # CORRECCIÓN ERROR 500: Cerrar archivo temporal antes de subirlo
                     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as t:
                         t.write(audio_grabado_k.getvalue())
-                        archivos_temporales_k.append(t.name)
-                        audio_ia_k = genai.upload_file(t.name)
-                        contenido_prompt_k.append(audio_ia_k)
+                        ruta_tmp_audio_k = t.name
+                    archivos_temporales_k.append(ruta_tmp_audio_k)
+                    audio_ia_k = genai.upload_file(ruta_tmp_audio_k)
+                    contenido_prompt_k.append(audio_ia_k)
 
                     if archivos_evidencia_k:
                         for archivo in archivos_evidencia_k:
                             ext = f".{archivo.name.split('.')[-1]}"
                             with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as t:
                                 t.write(archivo.getvalue())
-                                archivos_temporales_k.append(t.name)
-                                evid_ia_k = genai.upload_file(t.name)
-                                contenido_prompt_k.append(evid_ia_k)
+                                ruta_tmp_evid_k = t.name
+                            archivos_temporales_k.append(ruta_tmp_evid_k)
+                            evid_ia_k = genai.upload_file(ruta_tmp_evid_k)
+                            contenido_prompt_k.append(evid_ia_k)
 
                     contenido_prompt_k.append(prompt_k)
                     
@@ -355,4 +363,4 @@ with st.expander("🔒 AVISO DE PRIVACIDAD SIMPLIFICADO"):
     **4. Transferencia de Datos:** Para poder funcionar, los datos se procesan de manera cifrada a través de las interfaces de programación (APIs) de Google y Streamlit. Al marcar la casilla de aceptación y usar esta plataforma, usted consiente de forma expresa este procesamiento y transferencia automatizada a terceros para la generación de su documento.
     """)
 
-st.caption("© 2026 Aliado Ciudadano v1.1 | Desarrollado para el Acceso a la Justicia Social en México.")
+st.caption("© 2026 Aliado Ciudadano v1.2 | Desarrollado para el Acceso a la Justicia Social en México.")
