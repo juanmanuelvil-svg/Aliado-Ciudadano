@@ -89,25 +89,30 @@ with tab_formulario:
     historia_texto_p = st.text_area("⌨️ Describe el problema detalladamente:", height=100, key="hist_p")
     audio_grabado_p = st.audio_input("🎤 O si prefieres, díctalo aquí (Voz):", key="audio_p")
     
-    # MEJORA 1: Carga múltiple de archivos (fotos de libretas o más notas de voz)
-    archivos_evidencia_p = st.file_uploader("Sube fotos de evidencia o más audios (Opcional, puedes subir varios):", 
+    st.warning("⚠️ **PRIVACIDAD:** NO subas fotografías de tu INE, tarjetas bancarias o identificaciones oficiales. Solo sube evidencia del problema (ej. foto de un bache o un recibo de luz tapando tus datos).")
+    archivos_evidencia_p = st.file_uploader("Sube fotos de evidencia o más audios (Opcional):", 
                                           type=['png', 'jpg', 'jpeg', 'pdf', 'mp3', 'wav', 'm4a'], 
                                           accept_multiple_files=True, key="evid_p")
 
+    st.subheader("Paso 4: Autorización Legal")
+    acepto_terminos_p = st.checkbox("✅ Declaro que he leído el **Aviso de Privacidad** al final de la página, y consiento expresamente el tratamiento y transferencia de mis datos a los motores de Inteligencia Artificial para redactar mi documento.", key="chk_p")
+
     if st.button("✨ REDACTAR DEFENSA LEGAL", use_container_width=True, type="primary", key="btn_prof"):
+        if not acepto_terminos_p:
+            st.error("🚨 **ACCIÓN REQUERIDA:** Debes aceptar el Aviso de Privacidad marcando la casilla de arriba para poder continuar.")
+            st.stop()
+            
         if not nombre_p or (not historia_texto_p and not audio_grabado_p and not archivos_evidencia_p):
             st.warning("⚠️ Faltan datos: Nombre y Descripción (escrita, por voz o foto) son obligatorios.")
         else:
             with st.status("⚙️ Procesando el caso legal...", expanded=True) as status_p:
                 archivos_temporales_p = []
                 try:
-                    # Usamos el modelo estable sin parámetros problemáticos
                     model = genai.GenerativeModel('gemini-2.5-flash')
                     
                     status_p.update(label="⏳ Paso 1/2: Analizando evidencias y redactando borrador...", state="running")
                     contenido_prompt_p = []
                     
-                    # MEJORA 2 Y 3: Prompt con reglas estrictas de Fecha y Lengua
                     prompt_borrador_p = f"""
                     Actúas como un asistente legal experto en México. 
                     Nombre: {nombre_p} | Contacto: {contacto_p} | Autoridad: {dep_final_p} | Trámite: {tipo_tramite_p}
@@ -128,7 +133,6 @@ with tab_formulario:
                             audio_ia_p = genai.upload_file(t.name)
                             contenido_prompt_p.append(audio_ia_p)
 
-                    # Procesamiento múltiple de archivos
                     if archivos_evidencia_p:
                         for archivo in archivos_evidencia_p:
                             ext = f".{archivo.name.split('.')[-1]}"
@@ -214,22 +218,27 @@ with tab_kiosco:
     audio_grabado_k = st.audio_input("🎤 TOCA AQUÍ PARA HABLAR", key="audio_k")
 
     st.markdown("### 3️⃣ Sube fotos de evidencia o escritos a mano (Opcional):")
-    # Carga múltiple activada aquí también
+    st.warning("⚠️ **PRIVACIDAD:** NO subas fotografías de tu INE u otras identificaciones oficiales.")
     archivos_evidencia_k = st.file_uploader("Sube imágenes o audios adicionales:", 
                                           type=['png', 'jpg', 'jpeg', 'pdf', 'mp3', 'wav'], 
                                           accept_multiple_files=True, key="evid_k")
 
+    st.markdown("### 4️⃣ Autorización Legal")
+    acepto_terminos_k = st.checkbox("✅ Acepto el Aviso de Privacidad y permito que la Inteligencia Artificial escuche mi problema para ayudarme.", key="chk_k")
+
     if audio_grabado_k:
         if st.button("🚀 HACER MI DOCUMENTO", use_container_width=True, type="primary", key="btn_k"):
+            if not acepto_terminos_k:
+                st.error("🚨 **ACCIÓN REQUERIDA:** Debes tocar la casilla de 'Acepto el Aviso de Privacidad' de arriba para continuar.")
+                st.stop()
+                
             with st.status("⚙️ Escuchando y procesando tu voz...", expanded=True) as status_k:
                 archivos_temporales_k = []
                 try:
-                    # Usando modelo estable
                     model = genai.GenerativeModel('gemini-2.5-flash')
                     
                     status_k.update(label="⏳ Paso 1/2: Analizando audio e imágenes...", state="running")
                     
-                    # Prompt Kiosco Mejorado
                     prompt_k = f"""
                     Actúas como un asistente legal experto en México. Audio sobre: {st.session_state['categoria_k']}.
                     Genera tu respuesta separada EXACTAMENTE por la palabra "DIVISOR_K".
@@ -343,7 +352,7 @@ with st.expander("🔒 AVISO DE PRIVACIDAD SIMPLIFICADO"):
     
     **3. Almacenamiento y Borrado:** Esta plataforma NO almacena sus datos en bases de datos permanentes. La información, audios y evidencias existen únicamente durante su sesión activa (memoria caché) y se eliminan irreversiblemente al presionar el botón de limpiar o al cerrar el navegador.
     
-    **4. Transferencia de Datos:** Para poder funcionar, los datos se procesan de manera cifrada a través de las interfaces de programación (APIs) de Google y Streamlit. Al usar esta plataforma, usted consiente este procesamiento automatizado de terceros para la generación de su documento.
+    **4. Transferencia de Datos:** Para poder funcionar, los datos se procesan de manera cifrada a través de las interfaces de programación (APIs) de Google y Streamlit. Al marcar la casilla de aceptación y usar esta plataforma, usted consiente de forma expresa este procesamiento y transferencia automatizada a terceros para la generación de su documento.
     """)
 
-st.caption("© 2026 Aliado Ciudadano v1.0 | Desarrollado para el Acceso a la Justicia Social en México.")
+st.caption("© 2026 Aliado Ciudadano v1.1 | Desarrollado para el Acceso a la Justicia Social en México.")
