@@ -69,37 +69,37 @@ tab_formulario, tab_kiosco = st.tabs(["📝 MODO FORMULARIO (Escrito)", "🗣️
 with tab_formulario:
     st.info("💡 **JUSTICIA INCLUSIVA:** Si hablas Español, Náhuatl, Maya, Tseltal, Tsotsil, Mixteco o Zapoteco, graba tu voz aquí. La IA activará tus derechos lingüísticos y exigirá intérprete gratuito.")
     
-    st.subheader("Paso 1: Datos del Ciudadano")
+    st.subheader("Paso 1: Cuéntanos de ti")
     col1, col2 = st.columns(2)
     with col1:
-        nombre_p = st.text_input("👤 Nombre Completo:", key="nom_p")
+        nombre_p = st.text_input("👤 Tu Nombre Completo:", key="nom_p")
     with col2:
-        contacto_p = st.text_input("📍 Domicilio/Teléfono:", key="con_p")
+        contacto_p = st.text_input("📍 Tu Domicilio o Teléfono:", key="con_p")
 
-    dep_final_p = st.text_input("🏢 Autoridad Destinataria (Dejar en blanco si no se sabe):", key="dep_p")
+    dep_final_p = st.text_input("🏢 ¿A qué gobierno o dependencia va dirigido? (Si no sabes, déjalo en blanco):", key="dep_p")
     if not dep_final_p: dep_final_p = "Autoridad Competente"
 
-    st.subheader("Paso 2: Tipo de Trámite")
+    st.subheader("Paso 2: ¿Qué tipo de trámite necesitas?")
     tipo_tramite_p = st.selectbox("Selecciona una opción:", [
         "📝 Hacer una Petición (Queja de calle, bache, luz, agua)",
         "❓ Pedir Información Pública (Transparencia)",
-        "🛡️ Defender mis derechos (Multa, cobro excesivo)",
-        "🏥 Solicitar un Servicio (Atención médica, beca)"
+        "🛡️ Defender mis derechos (Multa, cobro excesivo, abuso)",
+        "🏥 Solicitar un Servicio (Atención médica, beca, apoyo)"
     ], key="tram_p")
 
-    st.subheader("Paso 3: Hechos y Evidencia")
-    historia_texto_p = st.text_area("⌨️ Describe el problema detalladamente:", height=100, key="hist_p")
-    audio_grabado_p = st.audio_input("🎤 O si prefieres, díctalo aquí (Voz):", key="audio_p")
+    st.subheader("Paso 3: ¿Qué pasó y cómo podemos probarlo?")
+    historia_texto_p = st.text_area("⌨️ Cuéntanos toda la historia con tus propias palabras:", height=100, key="hist_p")
+    audio_grabado_p = st.audio_input("🎤 O si prefieres, díctalo aquí (Graba tu voz):", key="audio_p")
     
-    st.warning("⚠️ **PRIVACIDAD:** NO subas fotografías de tu INE, tarjetas bancarias o identificaciones oficiales. Solo sube evidencia del problema (ej. foto de un bache o un recibo de luz tapando tus datos).")
-    archivos_evidencia_p = st.file_uploader("Sube fotos de evidencia o más audios (Opcional):", 
+    st.warning("⚠️ **PRIVACIDAD:** NO subas fotografías de tu INE, tarjetas bancarias, identificaciones oficiales ni claves personales. Solo sube evidencia del problema (ej. foto de un bache o un recibo de luz tapando tus datos).")
+    archivos_evidencia_p = st.file_uploader("Sube fotos o audios que sirvan como prueba (Opcional):", 
                                           type=['png', 'jpg', 'jpeg', 'pdf', 'mp3', 'wav', 'm4a'], 
                                           accept_multiple_files=True, key="evid_p")
 
-    st.subheader("Paso 4: Autorización Legal")
-    acepto_terminos_p = st.checkbox("✅ Declaro que he leído el **Aviso de Privacidad** al final de la página, y consiento expresamente el tratamiento y transferencia de mis datos a los motores de Inteligencia Artificial para redactar mi documento.", key="chk_p")
+    st.subheader("Paso 4: Permisos de Seguridad")
+    acepto_terminos_p = st.checkbox("✅ Acepto el Aviso de Privacidad (al final de la página) y autorizo que la Inteligencia Artificial procese mi historia de forma segura para crear mi documento.", key="chk_p")
 
-    if st.button("✨ REDACTAR DEFENSA LEGAL", use_container_width=True, type="primary", key="btn_prof"):
+    if st.button("✨ CREAR MI DOCUMENTO AHORA", use_container_width=True, type="primary", key="btn_prof"):
         if not acepto_terminos_p:
             st.error("🚨 **ACCIÓN REQUERIDA:** Debes aceptar el Aviso de Privacidad marcando la casilla de arriba para poder continuar.")
             st.stop()
@@ -128,7 +128,6 @@ with tab_formulario:
                     5. FIRMA: Al final solo debe ir "Atentamente" y ({nombre_p}). NUNCA firmes como "Abogado".
                     """
                     
-                    # CORRECCIÓN ERROR 500: Cerrar archivo temporal antes de subirlo
                     if audio_grabado_p:
                         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as t:
                             t.write(audio_grabado_p.getvalue())
@@ -206,29 +205,29 @@ with tab_kiosco:
     if st.button("🆘 NECESITO AYUDA HUMANA", type="primary", use_container_width=True, key="ayuda_k"):
         st.error("🚨 **ALERTA VISUAL:** POR FAVOR, UN ASESOR ACÉRQUESE A AYUDAR AL CIUDADANO.")
     
-    st.markdown("### 1️⃣ ¿De qué se trata su problema? Toca un dibujo:")
+    st.markdown("### 1️⃣ ¿En qué te podemos ayudar? Toca un botón:")
     if 'categoria_k' not in st.session_state: st.session_state['categoria_k'] = "General"
 
     col_k1, col_k2 = st.columns(2)
     with col_k1:
-        if st.button("💧 Luz, Agua, Calles", use_container_width=True): st.session_state['categoria_k'] = "Servicios Públicos"
-        if st.button("🏥 Salud y Médicos", use_container_width=True): st.session_state['categoria_k'] = "Atención Médica"
+        if st.button("💧 Calles, Agua o Luz", use_container_width=True): st.session_state['categoria_k'] = "Servicios Públicos"
+        if st.button("🏥 Citas Médicas o Salud", use_container_width=True): st.session_state['categoria_k'] = "Atención Médica"
     with col_k2:
-        if st.button("🚓 Multas y Policía", use_container_width=True): st.session_state['categoria_k'] = "Seguridad y Multas"
-        if st.button("🌾 Apoyo y Gobierno", use_container_width=True): st.session_state['categoria_k'] = "Programas Sociales"
+        if st.button("🚓 Multas o Abusos", use_container_width=True): st.session_state['categoria_k'] = "Seguridad y Multas"
+        if st.button("🌾 Apoyos o Becas", use_container_width=True): st.session_state['categoria_k'] = "Programas Sociales"
     
     st.success(f"✅ Tema seleccionado: **{st.session_state['categoria_k']}**")
 
-    st.markdown("### 2️⃣ Toca el micrófono. Dinos tu Nombre y cuál es el problema:")
-    audio_grabado_k = st.audio_input("🎤 TOCA AQUÍ PARA HABLAR", key="audio_k")
+    st.markdown("### 2️⃣ Toca el micrófono 🎤, dinos tu nombre y cuéntanos qué pasó:")
+    audio_grabado_k = st.audio_input("TOCA AQUÍ PARA HABLAR", key="audio_k")
 
-    st.markdown("### 3️⃣ Sube fotos de evidencia o escritos a mano (Opcional):")
-    st.warning("⚠️ **PRIVACIDAD:** NO subas fotografías de tu INE u otras identificaciones oficiales.")
-    archivos_evidencia_k = st.file_uploader("Sube imágenes o audios adicionales:", 
+    st.markdown("### 3️⃣ Sube fotos o papeles que sirvan de prueba (Opcional):")
+    st.warning("⚠️ **PRIVACIDAD:** NO subas fotografías de tu INE, tarjetas bancarias, identificaciones oficiales ni claves personales. Solo sube evidencia del problema (ej. foto de un bache o un recibo de luz tapando tus datos).")
+    archivos_evidencia_k = st.file_uploader("Puedes subir varias imágenes o audios:", 
                                           type=['png', 'jpg', 'jpeg', 'pdf', 'mp3', 'wav'], 
                                           accept_multiple_files=True, key="evid_k")
 
-    st.markdown("### 4️⃣ Autorización Legal")
+    st.markdown("### 4️⃣ Permisos de Seguridad")
     acepto_terminos_k = st.checkbox("✅ Acepto el Aviso de Privacidad y permito que la Inteligencia Artificial escuche mi problema para ayudarme.", key="chk_k")
 
     if audio_grabado_k:
@@ -261,7 +260,6 @@ with tab_kiosco:
                     
                     contenido_prompt_k = []
                     
-                    # CORRECCIÓN ERROR 500: Cerrar archivo temporal antes de subirlo
                     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as t:
                         t.write(audio_grabado_k.getvalue())
                         ruta_tmp_audio_k = t.name
@@ -363,4 +361,4 @@ with st.expander("🔒 AVISO DE PRIVACIDAD SIMPLIFICADO"):
     **4. Transferencia de Datos:** Para poder funcionar, los datos se procesan de manera cifrada a través de las interfaces de programación (APIs) de Google y Streamlit. Al marcar la casilla de aceptación y usar esta plataforma, usted consiente de forma expresa este procesamiento y transferencia automatizada a terceros para la generación de su documento.
     """)
 
-st.caption("© 2026 Aliado Ciudadano v1.2 | Desarrollado para el Acceso a la Justicia Social en México.")
+st.caption("© 2026 Aliado Ciudadano v1.3 | Desarrollado para el Acceso a la Justicia Social en México.")
